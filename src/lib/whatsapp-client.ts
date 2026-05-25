@@ -107,13 +107,16 @@ async function handleMessage(msg: WAMessage) {
       }
       if (!agent) {
         const agents = await db.getAgents();
-        agent = agents[0];
+        // Only automatically assign active agents
+        agent = agents.find((a) => a.status === "active");
         if (agent) {
           await db.setConversationAssignedAgent(chatId, agent.id);
         }
       }
-      if (agent) {
-        console.log("=== AGENT FOUND ===");
+      
+      // Only proceed and reply if the agent is active
+      if (agent && agent.status === "active") {
+        console.log("=== ACTIVE AGENT FOUND ===");
         console.log("Agent mode:", agent.mode);
         console.log("Agent has aiSettings:", !!agent.aiSettings);
 
