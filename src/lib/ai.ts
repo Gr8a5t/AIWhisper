@@ -130,7 +130,7 @@ export async function generateAIResponse(userText: string, settings: AISettings)
 
         console.log('Gemini API request:', JSON.stringify(requestBody, null, 2));
         
-        const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey, {
+        const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=' + apiKey, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
