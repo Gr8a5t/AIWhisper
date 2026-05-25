@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: [
+    '@whiskeysockets/baileys',
+    'ws',
+    'pino',
+    'bufferutil',
+    'utf-8-validate'
+  ],
   webpack: (config, {isServer}) => {
     if (!isServer) {
       config.resolve.fallback = {
