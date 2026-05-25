@@ -1,6 +1,5 @@
 import makeWASocket, {
   DisconnectReason,
-  useMultiFileAuthState,
   fetchLatestBaileysVersion,
   Browsers,
   type WASocket,
@@ -10,13 +9,10 @@ import makeWASocket, {
 import pino from "pino";
 import { Boom } from "@hapi/boom";
 import qr from "qrcode";
-import path from "path";
-import fs from "fs/promises";
 import * as db from "./db";
 import { generateAIResponse } from "./ai";
+import { useMongoAuthState, clearMongoAuthState } from "./whatsapp-mongo-auth";
 import type { Message, Agent } from "@/types";
-
-const WHATSAPP_AUTH_DIR = path.join(process.cwd(), "whatsapp-auth");
 
 function getHostBrowserDescriptor(): [string, string, string] {
   // Hardcoded to Ubuntu Chrome as WhatsApp servers frequently reject
@@ -240,10 +236,10 @@ export async function logout() {
   }
 
   try {
-    await fs.rm(WHATSAPP_AUTH_DIR, { recursive: true, force: true });
-    console.log("LOGOUT: Session directory deleted.");
+    await clearMongoAuthState();
+    console.log("LOGOUT: MongoDB auth state cleared.");
   } catch (e) {
-    console.error("LOGOUT: Error deleting session directory.", e);
+    console.error("LOGOUT: Error clearing MongoDB auth state.", e);
   }
 
   state.status = "disconnected";
@@ -271,7 +267,7 @@ export async function init() {
 
   try {
     const { state: authState, saveCreds } =
-      await useMultiFileAuthState(WHATSAPP_AUTH_DIR);
+      await useMongoAuthState();
 
     const { version: waVersion } = await fetchLatestBaileysVersion();
 

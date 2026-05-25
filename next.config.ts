@@ -23,7 +23,8 @@ const nextConfig: NextConfig = {
     'ws',
     'pino',
     'bufferutil',
-    'utf-8-validate'
+    'utf-8-validate',
+    'mongodb',
   ],
   webpack: (config, {isServer}) => {
     if (!isServer) {
