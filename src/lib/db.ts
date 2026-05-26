@@ -52,14 +52,15 @@ export async function getMessages(chatId: string): Promise<Message[]> {
     .toArray();
 }
 
-export async function addMessage(message: Message) {
+export async function addMessage(message: Message): Promise<boolean> {
   const db = await getDb();
   // Avoid duplicate inserts (Baileys can deliver the same message twice)
-  await db.collection('messages').updateOne(
+  const res = await db.collection('messages').updateOne(
     { id: message.id },
     { $setOnInsert: message },
     { upsert: true }
   );
+  return res.upsertedCount > 0;
 }
 
 // --- Stats ---

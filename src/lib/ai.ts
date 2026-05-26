@@ -125,12 +125,15 @@ export async function generateAIResponse(userText: string, settings: AISettings)
           generationConfig: {
             maxOutputTokens: settings.maxLen,
             temperature: settings.temperature,
+            thinkingConfig: {
+              thinkingBudget: 0,
+            },
           },
         };
 
         console.log('Gemini API request:', JSON.stringify(requestBody, null, 2));
         
-        const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=' + apiKey, {
+        const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),

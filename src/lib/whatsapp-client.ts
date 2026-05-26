@@ -88,7 +88,11 @@ async function handleMessage(msg: WAMessage) {
       senderName,
     };
 
-    await db.addMessage(message);
+    const isNew = await db.addMessage(message);
+    if (!isNew) {
+      console.log(`handleMessage: Skipping duplicate/already-saved message ${message.id}`);
+      return;
+    }
 
     const convo = await db.getConversation(chatId);
     await db.updateConversation(chatId, {
