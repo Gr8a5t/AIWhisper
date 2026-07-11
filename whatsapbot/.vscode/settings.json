@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "/home/great/code/last-bot-ai-trading/.venv/bin/python",
+  "python.analysis.extraPaths": [
+    "/home/great/code/last-bot-ai-trading/.venv/lib/python3.12/site-packages"
+  ]
+}

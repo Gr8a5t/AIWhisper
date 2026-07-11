@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+dist/
+
+# Credentials and Session Data
+.env
+auth_info_baileys/
+
+# Databases
+*.db
+*.db-journal
+
+# OS files
+.DS_Store
