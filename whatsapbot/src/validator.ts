@@ -35,10 +35,17 @@ export function checkStaleness(signal: TradeSignal, livePrice: number, receivedA
   pips: number;
   refPrice: number;
 } {
-  const refPrice = getReferencePrice(signal, receivedAtPrice);
+  const minEntry = Math.min(signal.entryMin, signal.entryMax);
+  const maxEntry = Math.max(signal.entryMin, signal.entryMax);
+
+  // If the price is currently inside the entry zone, it is NOT stale
+  if (livePrice >= minEntry && livePrice <= maxEntry) {
+    return { stale: false, pips: 0, refPrice: livePrice };
+  }
+
+  // Otherwise, calculate staleness from the closest edge of the entry zone
+  const refPrice = livePrice < minEntry ? minEntry : maxEntry;
   const priceDiff = Math.abs(livePrice - refPrice);
-  
-  // 1 standard pip in gold = $0.10, so priceDiff of $1.00 = 10 pips
   const pips = priceDiff * 10;
   const stale = pips > STALENESS_PIPS_LIMIT;
 

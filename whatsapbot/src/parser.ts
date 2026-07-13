@@ -103,7 +103,7 @@ export function parseWithRegex(text: string): ParseResult {
   }
 
   // 5. Match SL (Stop Loss)
-  const slPattern = new RegExp(`(?:SL|STOP\\s*LOSS|STOP)\\s*[:@-]?\\s*(${priceRegexStr})`, 'i');
+  const slPattern = new RegExp(`(?:SL|STOP\\s*LOSS|STOP)\\s*[^0-9]*?\\s*(${priceRegexStr})`, 'i');
   const slMatch = upperText.match(slPattern);
   let sl = 0;
   if (slMatch && slMatch[1]) {
@@ -115,9 +115,9 @@ export function parseWithRegex(text: string): ParseResult {
   }
 
   // 6. Match Take Profits (TP1, TP2, TP3)
-  const tp1Pattern = new RegExp(`(?:TP1|TP\\s*1|TAKE\\s*PROFIT\\s*1|TO|TP)\\s*[:@-]?\\s*(${priceRegexStr})`, 'i');
-  const tp2Pattern = new RegExp(`(?:TP2|TP\\s*2|TAKE\\s*PROFIT\\s*2)\\s*[:@-]?\\s*(${priceRegexStr})`, 'i');
-  const tp3Pattern = new RegExp(`(?:TP3|TP\\s*3|TAKE\\s*PROFIT\\s*3)\\s*[:@-]?\\s*(${priceRegexStr})`, 'i');
+  const tp1Pattern = new RegExp(`(?:TP1|TP\\s*1|TAKE\\s*PROFIT\\s*1|TO|TP)\\s*[^0-9]*?\\s*(${priceRegexStr})`, 'i');
+  const tp2Pattern = new RegExp(`(?:TP2|TP\\s*2|TAKE\\s*PROFIT\\s*2)\\s*[^0-9]*?\\s*(${priceRegexStr})`, 'i');
+  const tp3Pattern = new RegExp(`(?:TP3|TP\\s*3|TAKE\\s*PROFIT\\s*3)\\s*[^0-9]*?\\s*(${priceRegexStr})`, 'i');
 
   const tp1Match = upperText.match(tp1Pattern);
   const tp2Match = upperText.match(tp2Pattern);
@@ -133,7 +133,7 @@ export function parseWithRegex(text: string): ParseResult {
 
   // Fallback for TPs if they are listed sequentially without TP1/2/3 label
   if (tp1 === 0) {
-    const listPattern = new RegExp(`(?:TPS|TP|TAKE\\s*PROFITS)\\s*[:@-]?\\s*(${priceRegexStr})\\s*[,\\s]\\s*(${priceRegexStr})?(?:\\s*[,\\s]\\s*(${priceRegexStr}))?`, 'i');
+    const listPattern = new RegExp(`(?:TPS|TP|TAKE\\s*PROFITS)\\s*[^0-9]*?\\s*(${priceRegexStr})\\s*[^0-9]*?\\s*(${priceRegexStr})?(?:\\s*[^0-9]*?\\s*(${priceRegexStr}))?`, 'i');
     const listMatch = upperText.match(listPattern);
     if (listMatch) {
       if (listMatch[1]) tp1 = parseFloat(listMatch[1]);

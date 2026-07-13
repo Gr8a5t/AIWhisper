@@ -29,7 +29,8 @@ input double         InpFixedLot          = 0.01;                         // Fix
 input double         InpRiskPercent       = 2.0;                          // Risk % Per Trade (Risk Mode)
 input double         InpMaxDailyDrawdown  = 5.0;                          // Max Daily Drawdown (%)
 input int            InpMaxOpenTrades     = 3;                            // Max Open Positions
-input double         InpMinEquity         = 200.0;                        // Min Equity to Allow Trading
+input double         InpMinEquity         = 5.0;                          // Min Equity to Allow Trading
+input double         InpMaxFloatingLoss   = 5.0;                          // Max Allowed Floating Loss (0 = Disabled)
 input bool           InpUseLimitOrders    = false;                        // Use Limit Orders (False = Market Orders)
 input double         InpMaxSlippagePips   = 10.0;                         // Max Entry Slippage in Pips (Market Mode)
 input int            InpPollIntervalMs    = 200;                          // Server Poll Interval (milliseconds)
@@ -91,12 +92,48 @@ void OnDeinit(const int reason)
 }
 
 //+------------------------------------------------------------------+
+//| Check and Enforce Max Floating Loss Protection                   |
+//+------------------------------------------------------------------+
+void CheckMaxLossProtection()
+{
+   if(InpMaxFloatingLoss <= 0.0) return;
+   
+   double open_pnl = 0.0;
+   for(int i = 0; i < PositionsTotal(); i++)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket > 0 && PositionGetInteger(POSITION_MAGIC) == InpMagicNumber)
+      {
+         open_pnl += PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
+      }
+   }
+   
+   if(open_pnl <= -InpMaxFloatingLoss)
+   {
+      Print("CRITICAL: Max Floating Loss reached (", DoubleToString(open_pnl, 2), " <= -", DoubleToString(InpMaxFloatingLoss, 2), "). Closing all positions.");
+      
+      // Loop backwards to safely close all positions
+      for(int i = PositionsTotal() - 1; i >= 0; i--)
+      {
+         ulong ticket = PositionGetTicket(i);
+         if(ticket > 0 && PositionGetInteger(POSITION_MAGIC) == InpMagicNumber)
+         {
+            trade.PositionClose(ticket);
+         }
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
 //| Timer event handler                                              |
 //+------------------------------------------------------------------+
 void OnTimer()
 {
    // Check local positions to detect closures and report performance
    SyncLocalPositions(false);
+   
+   // Check Max Floating Loss Protection
+   CheckMaxLossProtection();
    
    // Poll server for new signals
    PollServer();
