@@ -37,6 +37,9 @@ from relay.models import (
 
 app = FastAPI(title="WhatsApp Gold Signal Relay Server", version="1.0.0")
 
+# In-memory cache for live symbol prices from polling EAs
+LATEST_PRICES = {}
+
 def send_telegram_message(chat_id: str, text: str):
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not bot_token or not chat_id:
@@ -208,6 +211,19 @@ def get_live_price(symbol: str = "XAUUSDm"):
                 "bid": tick.bid,
                 "ask": tick.ask
             }
+            
+    # Fallback to cached prices from polling EAs
+    if symbol in LATEST_PRICES:
+        price_data = LATEST_PRICES[symbol]
+        # Ensure price is fresh (under 15s)
+        if (datetime.utcnow() - price_data["time"]).total_seconds() < 15:
+            avg_price = (price_data["bid"] + price_data["ask"]) / 2
+            return {
+                "symbol": symbol,
+                "price": round(avg_price, 2),
+                "bid": price_data["bid"],
+                "ask": price_data["ask"]
+            }
     
     raise HTTPException(status_code=503, detail="MT5 terminal connection unavailable.")
 
@@ -292,6 +308,9 @@ def get_signals(
     license: str = Query(..., description="Subscriber license key"),
     balance: Optional[float] = Query(None, description="Subscriber current balance"),
     equity: Optional[float] = Query(None, description="Subscriber current equity"),
+    symbol: Optional[str] = Query(None, description="Subscriber current chart symbol"),
+    bid: Optional[float] = Query(None, description="Subscriber current bid price"),
+    ask: Optional[float] = Query(None, description="Subscriber current ask price"),
     db: sqlite3.Connection = Depends(get_db)
 ):
     """
@@ -315,6 +334,14 @@ def get_signals(
             "UPDATE subscribers SET last_balance = ?, last_equity = ?, last_seen = ? WHERE subscriber_id = ?",
             (balance, equity, last_seen, subscriber_id)
         )
+        
+    # Cache the latest price if sent by the EA
+    if symbol and bid is not None and ask is not None:
+        LATEST_PRICES[symbol] = {
+            "bid": bid,
+            "ask": ask,
+            "time": datetime.utcnow()
+        }
         
     # Retrieve and clear pending signals
     cursor.execute(

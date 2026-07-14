@@ -148,8 +148,10 @@ void PollServer()
    char result[];
    string result_headers;
    
-   // Construct URL with Subscriber ID and License Key
-   string url = StringFormat("%s/signals/%s?license=%s&balance=%.2f&equity=%.2f", InpRelayServerURL, InpSubscriberID, InpLicenseKey, AccountInfoDouble(ACCOUNT_BALANCE), AccountInfoDouble(ACCOUNT_EQUITY));
+   // Construct URL with Subscriber ID, License Key, and current symbol price info
+   double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   string url = StringFormat("%s/signals/%s?license=%s&balance=%.2f&equity=%.2f&symbol=%s&bid=%.5f&ask=%.5f", InpRelayServerURL, InpSubscriberID, InpLicenseKey, AccountInfoDouble(ACCOUNT_BALANCE), AccountInfoDouble(ACCOUNT_EQUITY), _Symbol, bid, ask);
    
    ResetLastError();
    // GET request
