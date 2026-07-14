@@ -8,6 +8,7 @@ const MIN_RR = parseFloat(process.env.MIN_RR || '1.5');
 const RISK_PERCENT = parseFloat(process.env.RISK_PERCENT || '2.0');
 const STALENESS_PIPS_LIMIT = parseFloat(process.env.STALENESS_PIPS_LIMIT || '30');
 const REFERENCE_PRICE_MODE = process.env.REFERENCE_PRICE_MODE || 'zone_mid';
+const MAX_RISK_PIPS = parseFloat(process.env.MAX_RISK_PIPS || '50');
 
 /**
  * Calculates the reference price based on the signal and configuration mode.
@@ -50,6 +51,30 @@ export function checkStaleness(signal: TradeSignal, livePrice: number, receivedA
   const stale = pips > STALENESS_PIPS_LIMIT;
 
   return { stale, pips, refPrice };
+}
+
+/**
+ * Adjusts the signal's entry zone to enforce a maximum risk boundary (e.g., 50 pips / 5.0 points on Gold).
+ */
+export function adjustEntryZoneForMaxRisk(signal: TradeSignal, maxRiskPips: number = 50): TradeSignal {
+  const maxRiskPoints = maxRiskPips / 10; // For Gold, 10 pips = 1.0 point
+  
+  if (signal.direction === 'BUY') {
+    const maxAllowedEntry = signal.sl + maxRiskPoints;
+    return {
+      ...signal,
+      entryMin: Math.min(signal.entryMin, maxAllowedEntry),
+      entryMax: Math.min(signal.entryMax, maxAllowedEntry)
+    };
+  } else if (signal.direction === 'SELL') {
+    const minAllowedEntry = signal.sl - maxRiskPoints;
+    return {
+      ...signal,
+      entryMin: Math.max(signal.entryMin, minAllowedEntry),
+      entryMax: Math.max(signal.entryMax, minAllowedEntry)
+    };
+  }
+  return signal;
 }
 
 /**

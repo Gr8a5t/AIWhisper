@@ -11,7 +11,7 @@ import { Boom } from '@hapi/boom';
 import dotenv from 'dotenv';
 import { parseSignal } from './parser.js';
 import { getLiveGoldPrice } from './price.js';
-import { checkStaleness, validateSignal, calculateLotSize } from './validator.js';
+import { checkStaleness, validateSignal, calculateLotSize, adjustEntryZoneForMaxRisk } from './validator.js';
 import { broadcastNotification } from './utils.js';
 
 dotenv.config();
@@ -202,8 +202,13 @@ async function startBot() {
         return;
       }
 
-      const signal = parseResult.signal;
+      let signal = parseResult.signal;
       console.log(`[BOT] Parsed Signal Details:`, JSON.stringify(signal, null, 2));
+
+      // Enforce maximum risk of 50 pips (5.0 points) to protect the account
+      const maxRiskPips = parseFloat(process.env.MAX_RISK_PIPS || '50');
+      signal = adjustEntryZoneForMaxRisk(signal, maxRiskPips);
+      console.log(`[BOT] Adjusted Signal for Max Risk (${maxRiskPips} pips):`, JSON.stringify(signal, null, 2));
 
       // 2. Fetch Live Price from MT5 Relay (fallback Yahoo Finance)
       const livePrice = await getLiveGoldPrice();
